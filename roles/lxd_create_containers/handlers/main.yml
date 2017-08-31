@@ -1,0 +1,29 @@
+---
+
+- name: Edit Hosts
+  become: true
+  become_user: root
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.addresses.eth0[0] }} {{ item.item }}"
+  when: item.changed
+  with_items: "{{ container_details.results }}"
+  listen: container_handler
+
+- name: Remove old key
+  known_hosts:
+    name: "{{ item.item }}"
+    state: absent
+  when: item.changed
+  with_items: "{{ container_details.results }}"
+  listen: container_handler
+
+
+- name: Copy pub key
+  shell: "lxc file push ~/.ssh/id_rsa.pub {{ item.item }}/home/ubuntu/.ssh/authorized_keys"
+  when: item.changed
+  with_items: "{{ container_details.results }}"
+  listen: container_handler
+
+    
+
